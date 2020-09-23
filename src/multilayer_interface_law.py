@@ -3,7 +3,7 @@ import scipy.sparse as sps
 
 import porepy as pp
 
-class RobinCouplingMultiLayer(pp.RobinCoupling):
+class RobinCouplingMultilayer(pp.RobinCoupling):
     """ A condition with resistance to flow between subdomains. Implementation
         of the model studied (though not originally proposed) by Martin et
         al 2005.
@@ -14,7 +14,9 @@ class RobinCouplingMultiLayer(pp.RobinCoupling):
 
     """
     def __init__(self, keyword, discr_master, discr_slave=None) -> None:
-        super(RobinCouplingMultiLayer, self).__init__(keyword, discr_master, discr_slave)
+        super(RobinCouplingMultilayer, self).__init__(keyword, discr_master, discr_slave)
+        self.edge_coupling_via_high_dim = None
+        self.edge_coupling_via_low_dim = None
 
     def discretize(self, g_h, g_l, data_h, data_l, data_edge):
         """ Discretize the interface law and store the discretization in the
@@ -112,6 +114,5 @@ class RobinCouplingMultiLayer(pp.RobinCoupling):
         matrix += cc
 
         return matrix, rhs
-
 
 # ------------------------------------------------------------------------------

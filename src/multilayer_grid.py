@@ -41,7 +41,7 @@ def multilayer_grid_bucket(gb):
         g_new = unite_grids([g for g in mg.side_grids.values()])
 
         # update the names
-        gs.name += ["fault"]
+        gs.name += ["fracture"]
         g_new.name += ["layer"]
 
         # add the new grid to the grid bucket
@@ -68,5 +68,22 @@ def multilayer_grid_bucket(gb):
         gb_new.set_edge_prop(edge, "mortar_grid", mg2)
 
     gb_new.assign_node_ordering()
+
+    # identification of layer and fracture
+    for g, d in gb_new:
+        d.update({pp.STATE: {}})
+        # save the identification of the fracture
+        if "fracture" in g.name:
+            d[pp.STATE]["fracture"] = np.ones(g.num_cells)
+            d[pp.STATE]["layer"] = np.zeros(g.num_cells)
+        # save the identification of the layer
+        elif "layer" in g.name:
+            d[pp.STATE]["fracture"] = np.zeros(g.num_cells)
+            half_cells = int(g.num_cells / 2)
+            d[pp.STATE]["layer"] = np.hstack((np.ones(half_cells), 2 * np.ones(half_cells)))
+        # save zero for the other cases
+        else:
+            d[pp.STATE]["fracture"] = np.zeros(g.num_cells)
+            d[pp.STATE]["layer"] = np.zeros(g.num_cells)
 
     return gb_new
