@@ -6,7 +6,8 @@ from flow import Flow
 from transport import Transport
 from reaction import Reaction
 from porosity import Porosity
-from aperture import Aperture
+from fracture_aperture import FractureAperture
+from layer_aperture import LayerAperture
 from heat import Heat
 
 class Scheme(object):
@@ -33,10 +34,10 @@ class Scheme(object):
         self.discr_porosity = Porosity(gb)
 
         # -- fracture aperture -- #
-        self.discr_fracture_aperture = Aperture(gb, "fracture_aperture")
+        self.discr_fracture_aperture = FractureAperture(gb, "fracture_aperture")
 
         # -- layer aperture -- #
-        self.discr_layer_aperture = Aperture(gb, "layer_aperture")
+        self.discr_layer_aperture = LayerAperture(gb, "layer_aperture")
 
     # ------------------------------------------------------------------------------#
 

@@ -1,10 +1,10 @@
 import porepy as pp
 
-class Aperture(object):
+class FractureAperture(object):
 
     # ------------------------------------------------------------------------------#
 
-    def __init__(self, gb, model="aperture"):
+    def __init__(self, gb, model="fracture_aperture"):
         # NOTE: the structure of the dofs are inherited from the solute transport equation
         # set the discretization for the grids
 
