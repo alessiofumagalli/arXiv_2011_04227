@@ -62,26 +62,20 @@ class Flow(object):
             if "fracture" in g.name:
                 fracture_aperture = d[pp.STATE]["fracture_aperture"]
                 fracture_aperture_initial = d[pp.STATE]["fracture_aperture_initial"]
-
-                k = np.power(fracture_aperture/fracture_aperture_initial, alpha+1) * self.data["fracture_k_t"]
-                perm = pp.SecondOrderTensor(kxx=k, kyy=1, kzz=1)
+                ratio = np.power(fracture_aperture/fracture_aperture_initial, alpha+1)
 
             elif "layer" in g.name:
                 layer_aperture = d[pp.STATE]["layer_aperture"]
                 layer_aperture_initial = d[pp.STATE]["layer_aperture_initial"]
-
-                k = np.power(layer_aperture/layer_aperture_initial, alpha+1) * self.data["layer_k_t"]
-                perm = pp.SecondOrderTensor(kxx=k, kyy=1, kzz=1)
+                ratio = np.power(layer_aperture/layer_aperture_initial, alpha+1)
 
             else:
                 porosity = d[pp.STATE]["porosity"]
                 porosity_initial = d[pp.STATE]["porosity_initial"]
-
-                k = np.power(porosity/porosity_initial, alpha) * self.data["k"]
-                perm = pp.SecondOrderTensor(kxx=k, kyy=k, kzz=1)
+                ratio = np.power(porosity/porosity_initial, alpha)
 
             # no source term is assumed by the user
-            param["second_order_tensor"] = perm
+            param["second_order_tensor"] = self.set_perm(ratio * self.data["k_t"](g), g)
             param["source"] = zeros
 
             # Boundaries
@@ -103,11 +97,11 @@ class Flow(object):
             if "fracture" in g_slave.name or "fracture" in g_master.name:
                 aperture = self.gb.node_props(g_slave, pp.STATE)["fracture_aperture"]
                 aperture_initial = self.gb.node_props(g_slave, pp.STATE)["fracture_aperture_initial"]
-                k_n = self.data["fracture_k_n"]
+                k_n = self.data["k_n"](g_slave if "fracture" in g_slave.name else g_master)
             else:
                 aperture = self.gb.node_props(g_slave, pp.STATE)["layer_aperture"]
                 aperture_initial = self.gb.node_props(g_slave, pp.STATE)["layer_aperture_initial"]
-                k_n = self.data["layer_k_n"]
+                k_n = self.data["k_n"](g_slave)
 
             k = 2 * check_P * (np.power(aperture/aperture_initial, alpha-1) * k_n)
             pp.initialize_data(mg, d, self.model, {"normal_diffusivity": k})
@@ -129,15 +123,13 @@ class Flow(object):
                 fracture_aperture_initial = d[pp.STATE]["fracture_aperture_initial"]
 
                 source = (fracture_aperture_star - fracture_aperture) / self.data_time["step"]
-                k = np.power(fracture_aperture_star/fracture_aperture_initial, alpha+1) * self.data["fracture_k_t"]
+                ratio = np.power(fracture_aperture_star/fracture_aperture_initial, alpha+1)
 
                 # fracture aperture and permeability check
-                if np.any(fracture_aperture < 0) or np.any(fracture_aperture_star < 0) or np.any(k < 0):
+                if np.any(fracture_aperture < 0) or np.any(fracture_aperture_star < 0) or np.any(ratio < 0):
                     raise ValueError(str(np.any(fracture_aperture < 0)) + " " +
                                      str(np.any(fracture_aperture_star < 0)) + " " +
-                                     str(np.any(k < 0)))
-
-                perm = pp.SecondOrderTensor(kxx=k, kyy=1, kzz=1)
+                                     str(np.any(ratio < 0)))
 
             elif "layer" in g.name:
                 layer_aperture = d[pp.STATE]["layer_aperture"]
@@ -145,15 +137,13 @@ class Flow(object):
                 layer_aperture_initial = d[pp.STATE]["layer_aperture_initial"]
 
                 source = (layer_aperture_star - layer_aperture) / self.data_time["step"]
-                k = np.power(layer_aperture_star/layer_aperture_initial, alpha+1) * self.data["layer_k_t"]
+                ratio = np.power(layer_aperture_star/layer_aperture_initial, alpha+1)
 
                 # layer aperture and permeability check
-                if np.any(layer_aperture < 0) or np.any(layer_aperture_star < 0) or np.any(k < 0):
+                if np.any(layer_aperture < 0) or np.any(layer_aperture_star < 0) or np.any(ratio < 0):
                     raise ValueError(str(np.any(layer_aperture < 0)) + " " +
                                      str(np.any(layer_aperture_star < 0)) + " " +
-                                     str(np.any(k < 0)))
-
-                perm = pp.SecondOrderTensor(kxx=k, kyy=1, kzz=1)
+                                     str(np.any(ratio < 0)))
 
             else:
                 porosity = d[pp.STATE]["porosity"]
@@ -161,17 +151,15 @@ class Flow(object):
                 porosity_initial = d[pp.STATE]["porosity_initial"]
 
                 source = (porosity_star - porosity) / self.data_time["step"]
-                k = np.power(porosity_star/porosity_initial, alpha) * self.data["k"]
+                ratio = np.power(porosity_star/porosity_initial, alpha)
 
                 # porosity and permeability check
-                if np.any(porosity < 0) or np.any(porosity_star < 0) or np.any(k < 0):
+                if np.any(porosity < 0) or np.any(porosity_star < 0) or np.any(ratio < 0):
                     raise ValueError(str(np.any(porosity < 0)) + " " +
                                      str(np.any(porosity_star < 0)) + " " +
-                                     str(np.any(k < 0)))
+                                     str(np.any(ratio < 0)))
 
-                perm = pp.SecondOrderTensor(kxx=k, kyy=k, kzz=1)
-
-            param["second_order_tensor"] = perm
+            param["second_order_tensor"] = self.set_perm(ratio * self.data["k_t"](g), g)
             param["source"] = g.cell_volumes * source
             d[pp.PARAMETERS][self.model].update(param)
 
@@ -183,11 +171,11 @@ class Flow(object):
             if "fracture" in g_slave.name or "fracture" in g_master.name:
                 aperture_star = self.gb.node_props(g_slave, pp.STATE)["fracture_aperture_star"]
                 aperture_initial = self.gb.node_props(g_slave, pp.STATE)["fracture_aperture_initial"]
-                k_n = self.data["fracture_k_n"]
+                k_n = self.data["k_n"](g_slave if "fracture" in g_slave.name else g_master)
             else:
                 aperture_star = self.gb.node_props(g_slave, pp.STATE)["layer_aperture_star"]
                 aperture_initial = self.gb.node_props(g_slave, pp.STATE)["layer_aperture_initial"]
-                k_n = self.data["layer_k_n"]
+                k_n = self.data["k_n"](g_slave)
 
             k = 2 * check_P * (np.power(aperture_star/aperture_initial, alpha-1) * k_n)
             d[pp.PARAMETERS][self.model].update({"normal_diffusivity": k})
@@ -258,5 +246,15 @@ class Flow(object):
 
         # export the P0 flux reconstruction
         pp.project_flux(self.gb, discr, self.flux, self.P0_flux, self.mortar)
+
+    # ------------------------------------------------------------------------------#
+
+    def set_perm(self, k, g):
+        if g.dim == 1:
+            return pp.SecondOrderTensor(kxx=k, kyy=1, kzz=1)
+        elif g.dim == 2:
+            return pp.SecondOrderTensor(kxx=k, kyy=k, kzz=1)
+        elif g.dim == 3:
+            return pp.SecondOrderTensor(kxx=k, kyy=k, kzz=k)
 
     # ------------------------------------------------------------------------------#
