@@ -1,36 +1,58 @@
 import numpy as np
 import porepy as pp
 
-from multilayer_grid import multilayer_grid_bucket
-
 # ------------------------------------------------------------------------------#
 
 def create_gb(mesh_size):
     domain = {"xmin": 0, "xmax": 1, "ymin": 0, "ymax": 1}
-    file_name = "network.csv"
-    network = pp.fracture_importer.network_2d_from_csv(file_name, domain=domain)
+
+    delta = 0.00125
+    frac_pts = np.array([[0.1, 0.9],
+                         [0, 0.8]])
+
+    norm = np.array([[-frac_pts[1, 1]+frac_pts[1, 0], frac_pts[0, 1]-frac_pts[0, 0]]])
+    norm /= np.linalg.norm(norm)
+
+    pts = np.hstack((frac_pts, frac_pts + delta*norm.T, frac_pts - delta*norm.T))
+
+    edges = np.array([[0, 2, 4],
+                      [1, 3, 5]])
 
     # assign the flag for the low permeable fractures
-    mesh_kwargs = {"mesh_size_frac": mesh_size, "mesh_size_min": mesh_size / 20}
+    mesh_kwargs = {"mesh_size_frac": mesh_size, "mesh_size_min": mesh_size / 200}
 
     # Generate a mixed-dimensional mesh
-    gb = network.mesh(mesh_kwargs)
+    network = pp.FractureNetwork2d(pts, edges, domain)
 
-    # construct the multi-layer grid bucket, we give also a name to the fault and layer grids
-    gb_multilayer = multilayer_grid_bucket(gb)
-    #pp.plot_grid(gb_multilayer, alpha=0, info="cf")
+    # Generate a mixed-dimensional mesh
+    gb = network.mesh(mesh_kwargs, constraints=[1, 2])
 
-    for _, d in gb_multilayer:
-        d[pp.PRIMARY_VARIABLES] = {}
-        d[pp.DISCRETIZATION] = {}
-        d[pp.DISCRETIZATION_MATRICES] = {}
-
-    for _, d in gb_multilayer.edges():
+    for _, d in gb.edges():
         d[pp.PRIMARY_VARIABLES] = {}
         d[pp.COUPLING_DISCRETIZATION] = {}
         d[pp.DISCRETIZATION_MATRICES] = {}
+        d[pp.STATE] = {}
 
-    return gb_multilayer
+    # identification of layer and fracture
+    for g, d in gb:
+        d[pp.PRIMARY_VARIABLES] = {}
+        d[pp.DISCRETIZATION] = {}
+        d[pp.DISCRETIZATION_MATRICES] = {}
+        d[pp.STATE] = {}
+
+        if g.dim < gb.dim_max():
+            g.name += ["fracture"]
+
+        # save the identification of the fracture
+        if "fracture" in g.name:
+            d[pp.STATE]["fracture"] = np.ones(g.num_cells)
+            d[pp.STATE]["layer"] = np.zeros(g.num_cells)
+        # save zero for the other cases
+        else:
+            d[pp.STATE]["fracture"] = np.zeros(g.num_cells)
+            d[pp.STATE]["layer"] = np.zeros(g.num_cells)
+
+    return gb
 
 # ------------------------------------------------------------------------------#
 
