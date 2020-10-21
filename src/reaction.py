@@ -14,7 +14,7 @@ class Reaction(object):
     def set_data(self, data, data_time):
 
         self.data = data
-        self.data = data_time
+        self.data_time = data_time
 
         # bisection parameters
         self.tol = data["tol_reaction"]
