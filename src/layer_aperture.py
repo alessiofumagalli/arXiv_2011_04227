@@ -1,3 +1,4 @@
+import numpy as np
 import porepy as pp
 
 class LayerAperture(object):
@@ -11,7 +12,7 @@ class LayerAperture(object):
         self.model = model
         self.gb = gb
         self.data = None
-        self.eta = None
+        self.data_time = None
 
         self.assembler = None
 
@@ -24,6 +25,8 @@ class LayerAperture(object):
 
         # set the discretizaton
         self.set_discr()
+
+        self.is_set = False
 
     # ------------------------------------------------------------------------------#
 
@@ -41,9 +44,9 @@ class LayerAperture(object):
 
     # ------------------------------------------------------------------------------#
 
-    def set_data(self, data):
+    def set_data(self, data, data_time):
         self.data = data
-        self.eta = data["eta"]
+        self.data_time = data_time
 
     # ------------------------------------------------------------------------------#
 
@@ -52,8 +55,19 @@ class LayerAperture(object):
 
     # ------------------------------------------------------------------------------#
 
-    def step(self, aperture_old, precipitate, precipitate_old):
-        return aperture_old / (1 + self.eta*(precipitate - precipitate_old))
+    def step(self, flux, porosity, lmbda, time, solute, aperture_min = 1e-12):
+        flux = np.clip(flux, 0., None)
+        S = -np.log(self.data["cutoff"] / solute) * flux / (porosity * lmbda)
+
+        threshold = time * flux / porosity
+        mask = S >= threshold
+        S[mask] = time * flux[mask] / porosity[mask]
+
+        # the aperture cannot be zero put a small value
+        S[S < aperture_min] = aperture_min
+        S[np.isnan(S)] = aperture_min
+
+        return S
 
     # ------------------------------------------------------------------------------#
 
