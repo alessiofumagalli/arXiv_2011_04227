@@ -22,7 +22,7 @@ def main():
     scheme.set_data(param)
 
     # exporter
-    save = pp.Exporter(gb, "case1", folder_name="solution")
+    save = pp.Exporter(gb, "case2", folder_name="solution")
     vars_to_save = scheme.vars_to_save()
 
     # post process
