@@ -66,8 +66,9 @@ class Flow(object):
 
             elif "layer" in g.name:
                 layer_aperture = d[pp.STATE]["layer_aperture"]
-                layer_aperture_initial = d[pp.STATE]["layer_aperture_initial"]
-                ratio = np.power(layer_aperture/layer_aperture_initial, alpha+1)
+                layer_porosity = d[pp.STATE]["layer_porosity"]
+                layer_porosity_initial = d[pp.STATE]["layer_porosity_initial"]
+                ratio = np.power(layer_porosity/layer_porosity_initial, alpha) * layer_aperture
 
             else:
                 porosity = d[pp.STATE]["porosity"]
@@ -98,13 +99,15 @@ class Flow(object):
                 aperture = self.gb.node_props(g_slave, pp.STATE)["fracture_aperture"]
                 aperture_initial = self.gb.node_props(g_slave, pp.STATE)["fracture_aperture_initial"]
                 k_n = self.data["k_n"](g_slave if "fracture" in g_slave.name else g_master)
+                ratio = np.power(aperture/aperture_initial, alpha) * k_n / aperture
             else:
                 aperture = self.gb.node_props(g_slave, pp.STATE)["layer_aperture"]
-                aperture_initial = self.gb.node_props(g_slave, pp.STATE)["layer_aperture_initial"]
+                porosity = self.gb.node_props(g_slave, pp.STATE)["layer_porosity"]
+                porosity_initial = self.gb.node_props(g_slave, pp.STATE)["layer_porosity_initial"]
                 k_n = self.data["k_n"](g_slave)
+                ratio = np.power(porosity/porosity_initial, alpha) * k_n / aperture
 
-            k = 2 * check_P * (np.power(aperture/aperture_initial, alpha-1) * k_n)
-            pp.initialize_data(mg, d, self.model, {"normal_diffusivity": k})
+            pp.initialize_data(mg, d, self.model, {"normal_diffusivity": 2 * check_P * ratio})
 
     # ------------------------------------------------------------------------------#
 
@@ -134,10 +137,13 @@ class Flow(object):
             elif "layer" in g.name:
                 layer_aperture = d[pp.STATE]["layer_aperture"]
                 layer_aperture_star = d[pp.STATE]["layer_aperture_star"]
-                layer_aperture_initial = d[pp.STATE]["layer_aperture_initial"]
 
-                source = (layer_aperture_star - layer_aperture) / self.data_time["step"]
-                ratio = np.power(layer_aperture_star/layer_aperture_initial, alpha+1)
+                layer_porosity = d[pp.STATE]["layer_porosity"]
+                layer_porosity_star = d[pp.STATE]["layer_porosity_star"]
+                layer_porosity_initial = d[pp.STATE]["layer_porosity_initial"]
+
+                source = (layer_aperture_star*layer_porosity_star - layer_aperture*layer_porosity) / self.data_time["step"]
+                ratio = np.power(layer_porosity_star/layer_porosity_initial, alpha) * layer_aperture_star
 
                 # layer aperture and permeability check
                 if np.any(layer_aperture < 0) or np.any(layer_aperture_star < 0) or np.any(ratio < 0):
@@ -172,13 +178,15 @@ class Flow(object):
                 aperture_star = self.gb.node_props(g_slave, pp.STATE)["fracture_aperture_star"]
                 aperture_initial = self.gb.node_props(g_slave, pp.STATE)["fracture_aperture_initial"]
                 k_n = self.data["k_n"](g_slave if "fracture" in g_slave.name else g_master)
+                ratio = np.power(aperture_star/aperture_initial, alpha) * k_n / aperture_star
             else:
                 aperture_star = self.gb.node_props(g_slave, pp.STATE)["layer_aperture_star"]
-                aperture_initial = self.gb.node_props(g_slave, pp.STATE)["layer_aperture_initial"]
+                porosity_star = self.gb.node_props(g_slave, pp.STATE)["layer_porosity_star"]
+                porosity_initial = self.gb.node_props(g_slave, pp.STATE)["layer_porosity_initial"]
                 k_n = self.data["k_n"](g_slave)
+                ratio = np.power(porosity_star/porosity_initial, alpha) * k_n / aperture_star
 
-            k = 2 * check_P * (np.power(aperture_star/aperture_initial, alpha-1) * k_n)
-            d[pp.PARAMETERS][self.model].update({"normal_diffusivity": k})
+            d[pp.PARAMETERS][self.model].update({"normal_diffusivity": 2 * check_P * ratio})
 
     # ------------------------------------------------------------------------------#
 
