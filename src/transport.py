@@ -82,10 +82,10 @@ class Transport(object):
             # compute the void volume
 
             vol_star = d[pp.STATE]["porosity_star"] + d[pp.STATE]["fracture_aperture_star"] +\
-                       d[pp.STATE]["layer_aperture_star"]
+                       d[pp.STATE]["layer_aperture_star"] * d[pp.STATE]["layer_porosity_star"]
 
             vol_old = d[pp.STATE]["porosity_old"] + d[pp.STATE]["fracture_aperture_old"] + \
-                      d[pp.STATE]["layer_aperture_old"]
+                      d[pp.STATE]["layer_aperture_old"] * d[pp.STATE]["layer_porosity_old"]
 
             param_mass_lhs["mass_weight"] = vol_star
             param_mass_rhs["mass_weight"] = vol_old
@@ -155,10 +155,10 @@ class Transport(object):
             # compute the void volume
 
             vol_star = d[pp.STATE]["porosity_star"] + d[pp.STATE]["fracture_aperture_star"] +\
-                       d[pp.STATE]["layer_aperture_star"]
+                       d[pp.STATE]["layer_aperture_star"] * d[pp.STATE]["layer_porosity_star"]
 
             vol_old = d[pp.STATE]["porosity_old"] + d[pp.STATE]["fracture_aperture_old"] + \
-                      d[pp.STATE]["layer_aperture_old"]
+                      d[pp.STATE]["layer_aperture_old"] * d[pp.STATE]["layer_porosity_old"]
 
             d[pp.PARAMETERS][self.mass_name_lhs].update({"mass_weight": vol_star})
             d[pp.PARAMETERS][self.mass_name_rhs].update({"mass_weight": vol_old})
