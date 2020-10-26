@@ -28,6 +28,7 @@ def create_gb(mesh_size):
         d[pp.DISCRETIZATION_MATRICES] = {}
 
     for _, d in gb_multilayer.edges():
+        d[pp.STATE] = {}
         d[pp.PRIMARY_VARIABLES] = {}
         d[pp.COUPLING_DISCRETIZATION] = {}
         d[pp.DISCRETIZATION_MATRICES] = {}
@@ -45,8 +46,8 @@ def get_param():
     # data problem
 
     tol = 1e-6
-    end_time = 3
-    num_steps = int(end_time * 20)
+    end_time = 1e9
+    num_steps = 400
     time_step = end_time / float(num_steps)
 
     return {
@@ -60,20 +61,26 @@ def get_param():
 
         # porosity
         "porosity": {
-            "eta": 0.5,
+            "eta": 5*1e-2,
             "initial": initial_porosity
         },
 
         # fracture aperture
         "fracture_aperture": {
-            "eta": 2,
+            "eta": 5*1e-2,
             "initial": initial_fracture_aperture
         },
 
         # layer aperture
         "layer_aperture": {
-            "eta": 2,
+            "cutoff": 1e-1,
             "initial": initial_layer_aperture
+        },
+
+        # layer porosity
+        "layer_porosity": {
+            "eta": 5*1e-2,
+            "initial": initial_layer_porosity
         },
 
         # flow
@@ -100,9 +107,9 @@ def get_param():
         # advection and diffusion of solute
         "solute_advection_diffusion": {
             "tol": tol,
-            "d": 1e-1,
-            "fracture_d_t": 1e-1, "fracture_d_n": 1e-1,
-            "layer_d_t": 1e-1, "layer_d_n": 1e-1,
+            "d": 1e-8,
+            "fracture_d_t": 1e-6, "fracture_d_n": 1e-6,
+            "layer_d_t": 1e-6, "layer_d_n": 1e-6,
 
             "bc": bc_solute,
             "initial_solute": initial_solute,
@@ -117,6 +124,7 @@ def get_param():
             "gamma_eq": 1,
             "theta": 0,
             "reaction": reaction_fct,
+            "lambda": lambda_fct,
             "tol_reaction": 1e-12,
             "tol_consider_zero": 1e-30,
             "max_iter": 1e2,
@@ -128,9 +136,15 @@ def get_param():
 
 # reaction function, parameter: solute (u), precipitate (w), temperature (theta)
 def reaction_fct(u, w, theta, tol=1e-15):
-    l = 10*np.exp(-4/theta)
-    r = np.power(u, 2)
-    return l*((w>tol)*np.maximum(1 - r, 0) - np.maximum(r - 1, 0))
+    l = lambda_fct(theta)
+    return -l*u
+    #r = np.power(u, 2)
+    #return l*((w>tol)*np.maximum(1 - r, 0) - np.maximum(r - 1, 0))
+
+# ------------------------------------------------------------------------------#
+
+def lambda_fct(theta):
+    return 1e-8 #10*np.exp(-4/theta)
 
 # ------------------------------------------------------------------------------#
 
@@ -153,7 +167,7 @@ def bc_flow(g, data, tol):
     labels[in_flow] = "dir"
     labels[out_flow] = "dir"
     bc_val[b_faces[in_flow]] = 4
-    bc_val[b_faces[out_flow]] = 0
+    bc_val[b_faces[out_flow]] = 1
 
     return labels, bc_val
 
@@ -216,22 +230,23 @@ def bc_solute(g, data, tol):
 # ------------------------------------------------------------------------------#
 
 def k_n(g):
+    low = low_zones(g).astype(np.float)
     if "fracture" in g.name:
         return 1e-1 * np.ones(g.num_cells)
     elif "layer" in g.name:
-        return 1e-5 * np.ones(g.num_cells)
+        return 1e-6 * low + 1e-5 * (1-low)
     else:
         raise ValueError
 
 # ------------------------------------------------------------------------------#
 
 def k_t(g):
+    low = low_zones(g).astype(np.float)
     if "fracture" in g.name:
         return 1e-1 * np.ones(g.num_cells)
     elif "layer" in g.name:
-        return 1e-5 * np.ones(g.num_cells)
+        return 1e-6 * low + 1e-5 * (1-low)
     else:
-        low = low_zones(g).astype(np.float)
         return 1e-6 * low + 1e-5 * (1-low)
 
 # ------------------------------------------------------------------------------#
@@ -249,7 +264,7 @@ def initial_solute(g, data, tol):
 # ------------------------------------------------------------------------------#
 
 def initial_precipitate(g, data, tol):
-    precipitate = 0.3 * np.ones(g.num_cells)
+    precipitate = 0 * np.ones(g.num_cells)
     return precipitate
 
 # ------------------------------------------------------------------------------#
@@ -265,9 +280,18 @@ def initial_porosity(g, data, tol):
 
 # ------------------------------------------------------------------------------#
 
+def initial_layer_porosity(g, data, tol):
+    if "layer" in g.name:
+        low = low_zones(g).astype(np.float)
+        return 0.2 * low + 0.25 * (1-low)
+    else:
+        return np.zeros(g.num_cells)
+
+# ------------------------------------------------------------------------------#
+
 def initial_fracture_aperture(g, data, tol):
     if "fracture" in g.name:
-        return 1e-2*0.4*np.ones(g.num_cells)
+        return 0.4*1e-2*np.ones(g.num_cells)
     else:
         # we set a zero aperture, meaning it is not active
         # the temporal scheme considered keeps this variable null
@@ -277,7 +301,7 @@ def initial_fracture_aperture(g, data, tol):
 
 def initial_layer_aperture(g, data, tol):
     if "layer" in g.name:
-        return 1e0*0.2*np.ones(g.num_cells)
+        return 1e-8*np.ones(g.num_cells)
     else:
         # we set a zero aperture, meaning it is not active
         # the temporal scheme considered keeps this variable null

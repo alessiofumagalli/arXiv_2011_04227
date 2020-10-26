@@ -54,13 +54,13 @@ def get_param():
 
         # porosity
         "porosity": {
-            "eta": 1e-1,
+            "eta": 5*1e-2,
             "initial": initial_porosity
         },
 
         # fracture aperture
         "fracture_aperture": {
-            "eta": 5*1e-1,
+            "eta": 5*1e-2,
             "initial": initial_fracture_aperture
         },
 
@@ -72,7 +72,7 @@ def get_param():
 
         # layer porosity
         "layer_porosity": {
-            "eta": 1e-1,
+            "eta": 5*1e-2,
             "initial": initial_layer_porosity
         },
 

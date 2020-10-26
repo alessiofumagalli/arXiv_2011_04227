@@ -4,8 +4,8 @@ import porepy as pp
 import sys; sys.path.insert(0, "../../src/")
 from scheme import Scheme
 
-#from data_no_layer import create_gb, get_param
-from data import create_gb, get_param
+from data_no_layer import create_gb, get_param
+#from data import create_gb, get_param
 
 
 # fare andare i due codici raffinati
