@@ -17,7 +17,7 @@ def main():
     scheme.set_data(param)
 
     # exporter
-    folder = "/home/elle/Dropbox/Work/PresentazioniArticoli/2020/Articles/Mathematics_in_Engineering_simulation_results/"
+    folder = "./case4/"
     save = pp.Exporter(gb, "case2", folder_name=folder+"caseYY/")
     vars_to_save = scheme.vars_to_save()
 
