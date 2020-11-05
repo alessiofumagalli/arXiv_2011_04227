@@ -89,6 +89,9 @@ class Reaction(object):
                 it = 0
                 time_step_a, time_step_b = 0, self.time_step
 
+                uw_bisec = uw_0[:, i]
+                time_step_mid = self.time_step
+
                 while err > self.tol and it < self.max_iter:
                     time_step_mid = 0.5*(time_step_a + time_step_b)
                     # re-do the step
@@ -102,7 +105,6 @@ class Reaction(object):
 
                     it += 1
                     err = np.abs(uw_bisec[1, :])
-
 
                 # we are at convergence, we want to avoid negative numbers
                 uw_bisec[1, :] = 0
