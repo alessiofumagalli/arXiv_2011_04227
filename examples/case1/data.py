@@ -132,12 +132,11 @@ def reaction_fct(u, w, theta, tol=1e-15):
     l = lambda_fct(theta)
     r = np.power(u, 2)
     return -l*u
-    #return l*((w>tol)*np.maximum(1 - r, 0) - np.maximum(r - 1, 0))
 
 # ------------------------------------------------------------------------------#
 
 def lambda_fct(theta):
-    return 100 #10*np.exp(-4/theta)
+    return 100
 
 # ------------------------------------------------------------------------------#
 

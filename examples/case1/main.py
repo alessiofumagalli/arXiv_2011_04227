@@ -4,12 +4,8 @@ import porepy as pp
 import sys; sys.path.insert(0, "../../src/")
 from scheme import Scheme
 
-#from data_no_layer import create_gb, get_param
-from data import create_gb, get_param
-
-
-# fare andare i due codici raffinati
-# sempre nel 2d metto degli eta piccoli ma non nulli
+from data_no_layer import create_gb, get_param
+#from data import create_gb, get_param
 
 def main():
 
@@ -22,7 +18,8 @@ def main():
     scheme.set_data(param)
 
     # exporter
-    save = pp.Exporter(gb, "case1", folder_name="solution")
+    folder = "/home/elle/Dropbox/Work/PresentazioniArticoli/2020/Articles/Mathematics_in_Engineering_simulation_results/case1/"
+    save = pp.Exporter(gb, "case1", folder_name=folder+"solution_eq")
     vars_to_save = scheme.vars_to_save()
 
     # post process

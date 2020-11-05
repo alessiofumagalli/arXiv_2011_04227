@@ -60,8 +60,8 @@ def get_param():
     # data problem
 
     tol = 1e-6
-    end_time = 0.2
     num_steps = 100
+    end_time = 0.2/100*num_steps
     time_step = end_time / float(num_steps)
 
     return {
@@ -75,13 +75,13 @@ def get_param():
 
         # porosity
         "porosity": {
-            "eta": 5*1e-2,
+            "eta": 0,
             "initial": initial_porosity
         },
 
         # fracture aperture
         "fracture_aperture": {
-            "eta": 5*1e-2,
+            "eta": 0,
             "initial": initial_fracture_aperture
         },
 
@@ -93,7 +93,7 @@ def get_param():
 
         # layer porosity
         "layer_porosity": {
-            "eta": 5*1e-2,
+            "eta": 0,
             "initial": initial_layer_porosity
         },
 
@@ -156,7 +156,7 @@ def reaction_fct(u, w, theta, tol=1e-15):
 # ------------------------------------------------------------------------------#
 
 def lambda_fct(theta):
-    return 100 #10*np.exp(-4/theta)
+    return 100
 
 # ------------------------------------------------------------------------------#
 

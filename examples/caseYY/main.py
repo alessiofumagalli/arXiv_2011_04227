@@ -8,7 +8,7 @@ from data import create_gb, get_param
 
 def main():
 
-    mesh_size = np.power(2., 5)
+    mesh_size = np.power(2., 3)
     gb = create_gb(mesh_size)
 
     param = get_param()
@@ -17,7 +17,8 @@ def main():
     scheme.set_data(param)
 
     # exporter
-    save = pp.Exporter(gb, "case2", folder_name="/home/elle/Dropbox/Work/PresentazioniArticoli/2020/Articles/Mathematics_in_Engineering_simulation_results/caseYY/")
+    folder = "/home/elle/Dropbox/Work/PresentazioniArticoli/2020/Articles/Mathematics_in_Engineering_simulation_results/"
+    save = pp.Exporter(gb, "case2", folder_name=folder+"caseYY/")
     vars_to_save = scheme.vars_to_save()
 
     # post process

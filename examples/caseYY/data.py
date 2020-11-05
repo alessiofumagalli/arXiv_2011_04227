@@ -8,7 +8,7 @@ def create_gb(mesh_size):
     domain = {"xmin": 0, "xmax": 100, "ymin": 0, "ymax": 100, "zmin": 0, "zmax": 100}
     frac = pp.Fracture(np.array([[0, 10, 10, 0], [0, 0, 10, 10], [8, 2, 2, 8]]) * 10)
     constraint = [pp.Fracture(np.array([[0, 10, 10, 0], [0, 0, 10, 10], [1, 1, 1, 1]]) * 10),
-                  pp.Fracture(np.array([[0, 10, 10, 0], [0, 0, 10, 10], [9, 9, 9, 9]]) * 10)]
+                  pp.Fracture(np.array([[0, 10, 10, 0], [0, 0, 10, 10], [8, 8, 8, 8]]) * 10)]
 
     # assign the flag for the low permeable fractures
     mesh_kwargs = {"mesh_size_frac": mesh_size, "mesh_size_min": mesh_size / 20}
@@ -46,8 +46,8 @@ def get_param():
     # data problem
 
     tol = 1e-6
-    end_time = 1e9
-    num_steps = 400
+    num_steps = 100
+    end_time = 1e6/200*num_steps
     time_step = end_time / float(num_steps)
 
     return {
@@ -61,25 +61,25 @@ def get_param():
 
         # porosity
         "porosity": {
-            "eta": 5*1e-2,
+            "eta": 0.5,
             "initial": initial_porosity
         },
 
         # fracture aperture
         "fracture_aperture": {
-            "eta": 5*1e-2,
+            "eta": 0.5,
             "initial": initial_fracture_aperture
         },
 
         # layer aperture
         "layer_aperture": {
-            "cutoff": 1e-1,
+            "cutoff": 1e-1, # DO NOT TOUCH WHILE CHANGING THE ETAS!!!!
             "initial": initial_layer_aperture
         },
 
         # layer porosity
         "layer_porosity": {
-            "eta": 5*1e-2,
+            "eta": 0.5,
             "initial": initial_layer_porosity
         },
 
@@ -107,9 +107,9 @@ def get_param():
         # advection and diffusion of solute
         "solute_advection_diffusion": {
             "tol": tol,
-            "d": 1e-8,
-            "fracture_d_t": 1e-6, "fracture_d_n": 1e-6,
-            "layer_d_t": 1e-6, "layer_d_n": 1e-6,
+            "d": 1e-12,
+            "fracture_d_t": 1e-12, "fracture_d_n": 1e-12,
+            "layer_d_t": 1e-12, "layer_d_n": 1e-12,
 
             "bc": bc_solute,
             "initial_solute": initial_solute,
@@ -138,13 +138,11 @@ def get_param():
 def reaction_fct(u, w, theta, tol=1e-15):
     l = lambda_fct(theta)
     return -l*u
-    #r = np.power(u, 2)
-    #return l*((w>tol)*np.maximum(1 - r, 0) - np.maximum(r - 1, 0))
 
 # ------------------------------------------------------------------------------#
 
 def lambda_fct(theta):
-    return 1e-8 #10*np.exp(-4/theta)
+    return 1e-6
 
 # ------------------------------------------------------------------------------#
 
@@ -158,7 +156,7 @@ def bc_flow(g, data, tol):
 
     # define inflow type boundary conditions
     in_flow = np.logical_and(b_face_centers[0] < 0 + tol,
-                             b_face_centers[2] > 90 - tol)
+                             b_face_centers[2] > 80 - tol)
 
     # define the labels and values for the boundary faces
     labels = np.array(["neu"] * b_faces.size)
@@ -183,7 +181,7 @@ def bc_temperature(g, data, tol):
 
     # define inflow type boundary conditions
     in_flow = np.logical_and(b_face_centers[0] < 0 + tol,
-                             b_face_centers[2] > 90 - tol)
+                             b_face_centers[2] > 80 - tol)
 
     # define the labels and values for the boundary faces
     labels_diff = np.array(["neu"] * b_faces.size)
@@ -194,7 +192,7 @@ def bc_temperature(g, data, tol):
     labels_adv[in_flow] = "dir"
     labels_adv[out_flow] = "dir"
 
-    bc_val[b_faces[in_flow]] = 1.5
+    bc_val[b_faces[in_flow]] = 10
     bc_val[b_faces[out_flow]] = 0
 
     return labels_diff, labels_adv, bc_val
@@ -211,7 +209,7 @@ def bc_solute(g, data, tol):
 
     # define inflow type boundary conditions
     in_flow = np.logical_and(b_face_centers[0] < 0 + tol,
-                             b_face_centers[2] > 90 - tol)
+                             b_face_centers[2] > 80 - tol)
 
     # define the labels and values for the boundary faces
     labels_diff = np.array(["neu"] * b_faces.size)
@@ -252,20 +250,23 @@ def k_t(g):
 # ------------------------------------------------------------------------------#
 
 def initial_temperature(g, data, tol):
-    temperature = np.ones(g.num_cells)
-    return temperature
+    return np.ones(g.num_cells)
 
 # ------------------------------------------------------------------------------#
 
 def initial_solute(g, data, tol):
-    solute = 0 * np.ones(g.num_cells)
-    return solute
+    if "fracture" in g.name or "layer" in g.name:
+        return np.zeros(g.num_cells)
+    else:
+        return np.zeros(g.num_cells)
 
 # ------------------------------------------------------------------------------#
 
 def initial_precipitate(g, data, tol):
-    precipitate = 0 * np.ones(g.num_cells)
-    return precipitate
+    if "fracture" in g.name or "layer" in g.name:
+        return np.zeros(g.num_cells)
+    else:
+        return np.zeros(g.num_cells)
 
 # ------------------------------------------------------------------------------#
 
@@ -301,7 +302,7 @@ def initial_fracture_aperture(g, data, tol):
 
 def initial_layer_aperture(g, data, tol):
     if "layer" in g.name:
-        return 1e-8*np.ones(g.num_cells)
+        return 1e-12*np.ones(g.num_cells)
     else:
         # we set a zero aperture, meaning it is not active
         # the temporal scheme considered keeps this variable null
