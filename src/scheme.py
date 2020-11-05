@@ -106,10 +106,10 @@ class Scheme(object):
     def correct_precipitate_with_star(self):
         for g, d in self.gb:
             vol_star = d[pp.STATE]["porosity_star"] + d[pp.STATE]["fracture_aperture_star"] +\
-                       d[pp.STATE]["layer_aperture_star"] * d[pp.STATE]["layer_porosity_star"]
+                       d[pp.STATE]["layer_porosity_star"]
 
             vol_old = d[pp.STATE]["porosity_old"] + d[pp.STATE]["fracture_aperture_old"] + \
-                      d[pp.STATE]["layer_aperture_old"] * d[pp.STATE]["layer_porosity_old"]
+                      d[pp.STATE]["layer_porosity_old"]
 
             d[pp.STATE]["precipitate_half"] = d[pp.STATE]["precipitate_old"] * (vol_old / vol_star)
 
@@ -175,10 +175,10 @@ class Scheme(object):
     def correct_precipitate_solute(self):
         for g, d in self.gb:
             vol_star = d[pp.STATE]["porosity_star"] + d[pp.STATE]["fracture_aperture_star"] +\
-                       d[pp.STATE]["layer_aperture_star"] * d[pp.STATE]["layer_porosity_star"]
+                       d[pp.STATE]["layer_porosity_star"]
 
             vol = d[pp.STATE]["porosity"] + d[pp.STATE]["fracture_aperture"] + \
-                      d[pp.STATE]["layer_aperture"] * d[pp.STATE]["layer_porosity"]
+                  d[pp.STATE]["layer_porosity"]
 
             d[pp.STATE]["solute"] = d[pp.STATE]["solute_star_star"] * (vol_star / vol)
             d[pp.STATE]["precipitate"] = d[pp.STATE]["precipitate_star_star"] * (vol_star / vol)
