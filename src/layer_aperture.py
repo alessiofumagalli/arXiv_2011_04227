@@ -56,8 +56,15 @@ class LayerAperture(object):
     # ------------------------------------------------------------------------------#
 
     def step(self, flux, porosity, lmbda, time, solute, aperture_min = 1e-12):
+
+        if np.isscalar(lmbda):
+            lmbda = lmbda * np.ones(flux.size)
+
         flux = np.clip(flux, 0., None)
-        S = -np.log(self.data["cutoff"] / solute) * flux / (porosity * lmbda)
+
+        S = np.zeros(flux.size)
+        mask = solute > 0
+        S[mask] = -np.log(self.data["cutoff"] / solute[mask]) * flux[mask] / (porosity[mask] * lmbda[mask])
 
         threshold = time * flux / porosity
         mask = S >= threshold
@@ -65,7 +72,7 @@ class LayerAperture(object):
 
         # the aperture cannot be zero put a small value
         S[S < aperture_min] = aperture_min
-        S[np.isnan(S)] = aperture_min
+        S[np.logical_not(np.isfinite(S))] = aperture_min
 
         return S
 
