@@ -69,29 +69,7 @@ class Scheme(object):
                                                                                           d[pp.STATE]["precipitate_star"],
                                                                                           d[pp.STATE]["precipitate_old"])
             if "layer" in g.name:
-                #flux = np.zeros(g.num_cells)
-                #porosity = np.zeros(g.num_cells)
-                #for e, d_e in self.gb.edges_of_node(g):
-                #    g_m = d_e["mortar_grid"]
-                #    _, g_h = self.gb.nodes_of_edge(e)
-                #    if g_h.dim < self.gb.dim_max():
-                #        # save the flux from the fracture
-                #        flux = -g_m.master_to_mortar_avg().T * d_e[pp.STATE][self.discr_flow.mortar] / g.cell_volumes
-                #    else:
-                #        cell_cell = g_m.mortar_to_master_int().T * g_h.cell_faces
-                #        # the cells are already ordered according to the layer ordering of the cells given by the mortar
-                #        # map
-                #        interface_cells = cell_cell.indices
-                #        d_h = self.gb.node_props(g_h)
-
-                #        porosity = d_h[pp.STATE]["porosity_star"][interface_cells]
-                #        temperature = d_h[pp.STATE]["temperature_star"][interface_cells]
-                #        lmbda = self.discr_solute_precipitate_reaction.data["lambda"](temperature)
-
-                #layer_aperture = d[pp.STATE]["layer_aperture"]
-                #d[pp.STATE]["layer_aperture_star"] = self.discr_layer_aperture.step(flux, porosity, lmbda, self.time, layer_aperture)
                 d[pp.STATE]["layer_aperture_star"] = d[pp.STATE]["layer_aperture_old"]
-
                 d[pp.STATE]["layer_porosity_star"] = self.discr_layer_porosity.step(d[pp.STATE]["layer_porosity_old"],
                                                                                     d[pp.STATE]["precipitate_star"],
                                                                                     d[pp.STATE]["precipitate_old"])
