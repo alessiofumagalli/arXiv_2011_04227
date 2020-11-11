@@ -1,7 +1,7 @@
 # A multi-layer reactive transport model for fractured porous media
 
 Source code and examples for the paper<br>
-"*A multi-layer reactive transport model for fractured porous media*" by Luca Formaggia, Alessio Fumagalli, Anna Scotti. See [arXiv pre-print](https://arxiv.org/abs/**).
+"*A multi-layer reactive transport model for fractured porous media*" by Luca Formaggia, Alessio Fumagalli, Anna Scotti. See [arXiv pre-print](https://arxiv.org/abs/2011.04227).
 
 
 # Reproduce results from paper
@@ -26,10 +26,10 @@ the non-smoothness of the reaction rate. We consider bi- and tridimensional nume
 asses the accuracy and benefit of the proposed model in realistic scenarios.
 
 # Citing
-If you use this work in your research, we ask you to cite the following publication [arXiv:** [math.NA]](https://arxiv.org/abs/**).
+If you use this work in your research, we ask you to cite the following publication [arXiv:2011.04227 [math.NA]](https://arxiv.org/abs/2011.04227).
 
 # PorePy version
-If you want to run the code you need to install [PorePy](https://github.com/pmgbergen/porepy) and revert to ** <br>
+If you want to run the code you need to install [PorePy](https://github.com/pmgbergen/porepy) and revert to d517347da187a64b4a27317434262837eb22f5b2 <br>
 Newer versions of PorePy may not be compatible with this repository.
 
 # License
